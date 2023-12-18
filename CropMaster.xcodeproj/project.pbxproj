@@ -13,6 +13,7 @@
 		0A7C70312B2F1B490078F49D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A7C702F2B2F1B490078F49D /* Main.storyboard */; };
 		0A7C70332B2F1B4A0078F49D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A7C70322B2F1B4A0078F49D /* Assets.xcassets */; };
 		0A7C70362B2F1B4A0078F49D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A7C70342B2F1B4A0078F49D /* LaunchScreen.storyboard */; };
+		0ACAE0112B308D0A00324A46 /* HighlightedAreaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACAE0102B308D0A00324A46 /* HighlightedAreaView.swift */; };
 		2FBEB4742B2FF10500E219BF /* ImageCropEdiorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBEB4732B2FF10500E219BF /* ImageCropEdiorView.swift */; };
 		2FBEB4762B2FF12900E219BF /* Extension+UIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBEB4752B2FF12900E219BF /* Extension+UIView.swift */; };
 /* End PBXBuildFile section */
@@ -26,6 +27,7 @@
 		0A7C70322B2F1B4A0078F49D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0A7C70352B2F1B4A0078F49D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0A7C70372B2F1B4A0078F49D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0ACAE0102B308D0A00324A46 /* HighlightedAreaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighlightedAreaView.swift; sourceTree = "<group>"; };
 		2FBEB4732B2FF10500E219BF /* ImageCropEdiorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropEdiorView.swift; sourceTree = "<group>"; };
 		2FBEB4752B2FF12900E219BF /* Extension+UIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UIView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,6 +67,7 @@
 				0A7C702D2B2F1B490078F49D /* ViewController.swift */,
 				2FBEB4752B2FF12900E219BF /* Extension+UIView.swift */,
 				2FBEB4732B2FF10500E219BF /* ImageCropEdiorView.swift */,
+				0ACAE0102B308D0A00324A46 /* HighlightedAreaView.swift */,
 				0A7C702F2B2F1B490078F49D /* Main.storyboard */,
 				0A7C70322B2F1B4A0078F49D /* Assets.xcassets */,
 				0A7C70342B2F1B4A0078F49D /* LaunchScreen.storyboard */,
@@ -149,6 +152,7 @@
 				0A7C702E2B2F1B490078F49D /* ViewController.swift in Sources */,
 				0A7C702A2B2F1B490078F49D /* AppDelegate.swift in Sources */,
 				0A7C702C2B2F1B490078F49D /* SceneDelegate.swift in Sources */,
+				0ACAE0112B308D0A00324A46 /* HighlightedAreaView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

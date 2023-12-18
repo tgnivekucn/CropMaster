@@ -8,8 +8,14 @@ import UIKit
 
 class ImageCropEdiorView: UIView {
     private var imageView: UIImageView?
+    private var maskViewOfImage: HighlightedAreaView = HighlightedAreaView()
+
     private let originalSelectAreaSize = CGSize(width: 200, height: 100)
-    private var selectAreaFrame = CGRect(origin: .zero, size: CGSize(width: 200, height: 100))
+    private var selectAreaFrame = CGRect(origin: .zero, size: CGSize(width: 200, height: 100)) {
+        didSet {
+            maskViewOfImage.sethighlightedArea(frame: selectAreaFrame)
+        }
+    }
     private var currentPointInImageView: CGPoint = .zero
     private var isPinching: Bool = false
     private let minScale: CGFloat = 1
@@ -235,6 +241,11 @@ class ImageCropEdiorView: UIView {
             
             imageView?.layer.addSublayer(rectShapeLayer)
         }
+        
+        maskViewOfImage.frame = imageView?.frame ?? .zero
+        maskViewOfImage.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        self.addSubview(maskViewOfImage)
+        maskViewOfImage.sethighlightedArea(frame: selectAreaFrame)
     }
     
     private func setupRectShapeLayer(imageSize: CGSize) {
