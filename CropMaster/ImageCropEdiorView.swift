@@ -10,7 +10,11 @@ import UIKit
 class ImageCropEdiorView: UIView {
     private var imageView: UIImageView?
     private let originalSelectAreaSize = CGSize(width: 200, height: 100)
-    private var selectAreaFrame = CGRect(origin: .zero, size: CGSize(width: 200, height: 100))
+    private var selectAreaFrame = CGRect(origin: .zero, size: CGSize(width: 200, height: 100)) {
+        didSet {
+            print("test88 selectAreaFrame: \(selectAreaFrame)")
+        }
+    }
     private var currentPointInImageView: CGPoint = .zero
     private var isPinching: Bool = false
     private let minScale: CGFloat = 1
@@ -33,7 +37,9 @@ class ImageCropEdiorView: UIView {
     private let lineWidth = CGFloat(5)
     var imageToEdit: UIImage?
 
-    var startPoint: CGPoint?
+    private var startPoint: CGPoint?
+    private var fixedStartPoint: CGPoint?
+    private var inMoveMode: Bool = false
     var passResultImageClosure: ((UIImage?) -> Void)?
     let rectShapeLayer: CAShapeLayer = {
         let shapeLayer = CAShapeLayer()
@@ -156,6 +162,7 @@ class ImageCropEdiorView: UIView {
         let originPoint = CGPoint(x: (targetSize.width / 2) - (originalSelectAreaSize.width / 2),
                                        y: (targetSize.height / 2) - (originalSelectAreaSize.height / 2))
         rectShapeLayer.path = UIBezierPath(rect: CGRect(origin: originPoint, size: selectAreaFrame.size)).cgPath
+        selectAreaFrame = CGRect(origin: originPoint, size: selectAreaFrame.size)
     }
 
     private func setupImageView(imageSize: CGSize, safeAreaWidth: CGFloat, safeAreaHeight: CGFloat, safeAreaInsets: UIEdgeInsets) {
@@ -201,8 +208,21 @@ class ImageCropEdiorView: UIView {
     private func getDefaultImageViewSize(imageSize: CGSize, targetSize: CGSize) -> CGSize {
         return calculateAspectFitSize(maxSize: targetSize, imageSize: imageSize)
     }
-
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {}
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        
+        let currentPoint: CGPoint
+        
+        if let predicted = event?.predictedTouches(for: touch), let lastPoint = predicted.last {
+            currentPoint = lastPoint.location(in: imageView)
+        } else {
+            currentPoint = touch.location(in: imageView)
+        }
+        fixedStartPoint = getFixedStartPoint(frame: selectAreaFrame, currentPoint: currentPoint)
+        inMoveMode = checkIsInMoveMode(frame: selectAreaFrame, currentPoint: currentPoint)
+        print("test11 inMoveMode: \(inMoveMode), selectAreaFrame: \(selectAreaFrame)")
+    }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let imageView = imageView else { return }
@@ -217,12 +237,24 @@ class ImageCropEdiorView: UIView {
         }
         currentPointInImageView = currentPoint
 
-        let originPoint = getSelectAreaOriginPoint(touchPoint: currentPoint,
-                                                   selectAreaSize: selectAreaFrame.size,
-                                                   imageSize: imageView.frame.size)
-        let frame = CGRect(origin: originPoint, size: selectAreaFrame.size) //rect(from: startPoint, to: currentPoint)
-
-        rectShapeLayer.path = UIBezierPath(rect: frame).cgPath
+        let expandedFrame = selectAreaFrame.insetBy(dx: -50, dy: -50)
+        guard expandedFrame.contains(currentPoint) else { return }
+        
+        if inMoveMode {
+            let originPoint = getSelectAreaOriginPoint(touchPoint: currentPoint,
+                                                       selectAreaSize: selectAreaFrame.size,
+                                                       imageSize: imageView.frame.size)
+            let frame = CGRect(origin: originPoint, size: selectAreaFrame.size) //rect(from: startPoint, to: currentPoint)
+            rectShapeLayer.path = UIBezierPath(rect: frame).cgPath
+            fixedStartPoint = getFixedStartPoint(frame: selectAreaFrame, currentPoint: currentPoint)
+            selectAreaFrame = frame
+        } else {
+            if let fixedStartPoint = fixedStartPoint {
+                let frame = rect(from: fixedStartPoint, to: currentPoint)
+                selectAreaFrame = frame
+                rectShapeLayer.path = UIBezierPath(rect: frame).cgPath
+            }
+        }
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -236,7 +268,8 @@ class ImageCropEdiorView: UIView {
                                                    selectAreaSize: selectAreaFrame.size,
                                                    imageSize: imageView.frame.size)
         let frame = CGRect(origin: originPoint, size: selectAreaFrame.size) //rect(from: startPoint, to: currentPoint)
-        
+        inMoveMode = checkIsInMoveMode(frame: selectAreaFrame, currentPoint: currentPoint)
+
         setTargetImage(frame: frame)
     }
 
@@ -278,6 +311,15 @@ class ImageCropEdiorView: UIView {
     }
 
     // MARK: - Utility methods
+    private func checkIsInMoveMode(frame: CGRect, currentPoint: CGPoint) -> Bool {
+        let centerAreaWidth = frame.width * 0.1
+        let centerPoint = CGPoint(x: frame.origin.x + (frame.width / 2), y: frame.origin.y + (frame.height / 2))
+        if (abs(currentPoint.x - centerPoint.x) < centerAreaWidth) && (abs(currentPoint.y - centerPoint.y) < centerAreaWidth) {
+            return true
+        }
+        return false
+    }
+
     private func calculateAspectFitSize(maxSize: CGSize, imageSize: CGSize) -> CGSize {
         let widthRatio = maxSize.width / imageSize.width
         let heightRatio = maxSize.height / imageSize.height
@@ -286,5 +328,33 @@ class ImageCropEdiorView: UIView {
         let newWidth = imageSize.width * ratio
         let newHeight = imageSize.height * ratio
         return CGSize(width: newWidth, height: newHeight)
+    }
+    
+    private func getFixedStartPoint(frame: CGRect, currentPoint: CGPoint) -> CGPoint {
+        let topLeftPoint = frame.origin
+        let topRightPoint = CGPoint(x: (frame.origin.x + frame.width), y: frame.origin.y)
+        let bottomLeftPoint = CGPoint(x: frame.origin.x, y: (frame.origin.y + frame.height))
+        let bottomRightPoint = CGPoint(x: (frame.origin.x + frame.width), y: (frame.origin.y + frame.height))
+
+        let topLeftPointWeight = abs(topLeftPoint.x - currentPoint.x) + abs(topLeftPoint.y - currentPoint.y)
+        let topRightPointWeight = abs(topRightPoint.x - currentPoint.x) + abs(topRightPoint.y - currentPoint.y)
+        let bottomLeftPointWeight = abs(bottomLeftPoint.x - currentPoint.x) + abs(bottomLeftPoint.y - currentPoint.y)
+        let bottomRightPointWeight = abs(bottomRightPoint.x - currentPoint.x) + abs(bottomRightPoint.y - currentPoint.y)
+
+        let min1 = min(topLeftPointWeight, topRightPointWeight)
+        let min2 = min(bottomLeftPointWeight, bottomRightPointWeight)
+        if min1 < min2 {
+            if topLeftPointWeight < topRightPointWeight {
+                return bottomRightPoint // topLeftPoint
+            } else {
+                return bottomLeftPoint // topRightPoint
+            }
+        } else {
+            if bottomLeftPointWeight < bottomRightPointWeight {
+                return topRightPoint // bottomLeftPoint
+            } else {
+                return topLeftPoint // bottomRightPoint
+            }
+        }
     }
 }

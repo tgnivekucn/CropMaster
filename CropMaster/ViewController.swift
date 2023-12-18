@@ -26,7 +26,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
     }
 
     private func showCustomCropEditorView(image: UIImage) {
-        let view = ImageCropEdiorView(frame: CGRect(origin: .zero, size: CGSize(width: 300, height: 300)))
+        let view = ImageCropEdiorView(frame: CGRect(origin: .zero, size: CGSize(width: self.view.frame.width, height: self.view.frame.height)))
         view.setupView(image: image)
         self.view.addSubview(view)
     }
