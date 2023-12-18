@@ -24,6 +24,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         picker.sourceType = .photoLibrary // For picking from the photo library
         present(picker, animated: true)
     }
+
+    private func showCustomCropEditorView(image: UIImage) {
+        let view = ImageCropEdiorView(frame: CGRect(origin: .zero, size: CGSize(width: 300, height: 300)))
+        view.setupView(image: image)
+        self.view.addSubview(view)
+    }
 }
 
 extension ViewController: UIImagePickerControllerDelegate {
@@ -31,13 +37,15 @@ extension ViewController: UIImagePickerControllerDelegate {
         dismiss(animated: true, completion: nil)
 
         if let pickedImage = info[.originalImage] as? UIImage {
-            let customEditorVC = CustomImageEditorViewController()
-            customEditorVC.passResultImageClosure = { image in
-                // do something to the cropped image
-                print("test11 got result cropped image: \(image)")
-            }
-            customEditorVC.imageToEdit = pickedImage
-            self.navigationController?.pushViewController(customEditorVC, animated: false)
+            showCustomCropEditorView(image: pickedImage)
+            
+//            let customEditorVC = CustomImageEditorViewController()
+//            customEditorVC.passResultImageClosure = { image in
+//                // do something to the cropped image
+//                print("test11 got result cropped image: \(image)")
+//            }
+//            customEditorVC.imageToEdit = pickedImage
+//            self.navigationController?.pushViewController(customEditorVC, animated: false)
         }
     }
 

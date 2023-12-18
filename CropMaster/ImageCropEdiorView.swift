@@ -1,13 +1,13 @@
 //
-//  CustomImageEditorViewController.swift
-//  CustomSelectAreaOfImagePhotoPicker
+//  ImageCropEdiorView.swift
+//  CropMaster
 //
-//  Created by 粘光裕 on 2023/12/17.
+//  Created by SomnicsAndrew on 2023/12/18.
 //
 
 import UIKit
 
-class CustomImageEditorViewController: UIViewController {
+class ImageCropEdiorView: UIView {
     private var imageView: UIImageView?
     private let originalSelectAreaSize = CGSize(width: 200, height: 100)
     private var selectAreaFrame = CGRect(origin: .zero, size: CGSize(width: 200, height: 100))
@@ -42,49 +42,136 @@ class CustomImageEditorViewController: UIViewController {
         shapeLayer.lineWidth = CGFloat(5)
         return shapeLayer
     }()
+    
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupEvent()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupEvent()
+    }
+    
+    private func commonInit() {
+         // Perform initialization tasks here
+         // For example, setup subviews, add constraints, configure appearance
+//         setupSubviews()
+//         setupConstraints()
+//         configureAppearance()
+     }
+     
+     override func willMove(toSuperview newSuperview: UIView?) {
+         super.willMove(toSuperview: newSuperview)
+         // Called when the view is about to be added or removed from its superview
+         if newSuperview != nil {
+             // View is being added to a superview
+         } else {
+             // View is being removed from its superview
+         }
+     }
+     
+     override func layoutSubviews() {
+         super.layoutSubviews()
+         // Called when the view's bounds or constraints change
+         // Perform layout-related tasks here, such as updating subview frames or constraints
+     }
+     
+     override func draw(_ rect: CGRect) {
+         super.draw(rect)
+         // Called to draw the view's content
+         // Perform custom drawing here using Core Graphics or other drawing APIs
+     }
+     
+     override func didMoveToSuperview() {
+         super.didMoveToSuperview()
+         // Called when the view has been added or removed from its superview
+         if superview != nil {
+             // View has been added to a superview
+         } else {
+             // View has been removed from its superview
+         }
+     }
+     
+     override func didMoveToWindow() {
+         super.didMoveToWindow()
+         // Called when the view has been added or removed from a window
+         if window != nil {
+             // View has been added to a window
+         } else {
+             // View has been removed from a window
+         }
+     }
+     
+     override func removeFromSuperview() {
+         // Perform cleanup tasks here
+         // Remove any observers, release resources, etc.
+         
+         super.removeFromSuperview()
+     }
+
+    // MARK: - Internal methods
+    func setupView(image: UIImage) {
+        self.clipsToBounds = true
+        self.imageToEdit = image
+        updateSubViewLayout(viewWidth: self.frame.width,
+                            viewHeight: self.frame.height,
+                            areaInsets: .zero,
+                            imageToEdit: image)
+    }
+
+    // MARK: - Private methods
+    private func setupEvent() {
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(pinch(gesture:)))
-        self.view.addGestureRecognizer(pinchGesture)
+        self.addGestureRecognizer(pinchGesture)
     }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        let safeAreaInsets = view.safeAreaInsets
-        let safeAreaWidth = view.bounds.width - safeAreaInsets.left - safeAreaInsets.right
-        let safeAreaHeight = view.bounds.height - safeAreaInsets.top - safeAreaInsets.bottom
-        // Now you can use safeAreaWidth and safeAreaHeight
-        print("test11 viewDidLayoutSubviews ~~")
-
-        if let imageToEdit = imageToEdit {
-            setupView(imageSize: imageToEdit.size,
-                      safeAreaWidth: safeAreaWidth,
-                      safeAreaHeight: safeAreaHeight,
-                      safeAreaInsets: safeAreaInsets)
-           
-            imageView?.layer.addSublayer(rectShapeLayer)
-            let targetSize = getDefaultImageViewSize(imageSize: imageToEdit.size)
-            let originPoint = CGPoint(x: (targetSize.width / 2) - (originalSelectAreaSize.width / 2),
-                                           y: (targetSize.height / 2) - (originalSelectAreaSize.height / 2))
-            rectShapeLayer.path = UIBezierPath(rect: CGRect(origin: originPoint, size: selectAreaFrame.size)).cgPath
-        }
-    }
-
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
+    
+    private func hide() {
         passResultImageClosure?(croppedImage)
     }
 
-    func setupView(imageSize: CGSize, safeAreaWidth: CGFloat, safeAreaHeight: CGFloat, safeAreaInsets: UIEdgeInsets) {
-        let targetSize = getDefaultImageViewSize(imageSize: imageSize)
+    private func updateSubViewLayout(viewWidth: CGFloat, viewHeight: CGFloat, areaInsets: UIEdgeInsets, imageToEdit: UIImage?) {
+        // Remove the rectShapeLayer to avoid adding the rectShapeLayer repeatedly
+        rectShapeLayer.removeFromSuperlayer()
+
+        // Setup rectShapeLayer
+        if let imageToEdit = imageToEdit {
+            setupRectShapeLayer(imageSize: imageToEdit.size)
+        }
+
+        // Setup imageView
+        if let imageToEdit = imageToEdit {
+            setupImageView(imageSize: imageToEdit.size,
+                      safeAreaWidth: viewWidth,
+                      safeAreaHeight: viewHeight,
+                      safeAreaInsets: areaInsets)
+           
+            imageView?.layer.addSublayer(rectShapeLayer)
+        }
+    }
+
+    private func setupRectShapeLayer(imageSize: CGSize) {
+        let targetSize = getDefaultImageViewSize(imageSize: imageSize, targetSize: self.frame.size)
+        let originPoint = CGPoint(x: (targetSize.width / 2) - (originalSelectAreaSize.width / 2),
+                                       y: (targetSize.height / 2) - (originalSelectAreaSize.height / 2))
+        rectShapeLayer.path = UIBezierPath(rect: CGRect(origin: originPoint, size: selectAreaFrame.size)).cgPath
+    }
+
+    private func setupImageView(imageSize: CGSize, safeAreaWidth: CGFloat, safeAreaHeight: CGFloat, safeAreaInsets: UIEdgeInsets) {
+        // 1. Remove the image view to avoid adding the image view repeatedly
+        imageView?.removeFromSuperview()
+
+        // 2. setup imageView
+        let targetSize = getDefaultImageViewSize(imageSize: imageSize, targetSize: self.frame.size)
         let originPoint = CGPoint(x: safeAreaInsets.left, y: safeAreaInsets.top)
         imageView = UIImageView(frame: CGRect(origin: originPoint,
                                               size: targetSize))
         if let imageView = imageView {
-            self.view.addSubview(imageView)
+            self.addSubview(imageView)
         }
         imageView?.image = imageToEdit
+        imageView?.contentMode = .scaleAspectFit
     }
 
     @objc private func pinch(gesture: UIPinchGestureRecognizer) {
@@ -111,17 +198,8 @@ class CustomImageEditorViewController: UIViewController {
         }
     }
 
-    private func getDefaultImageViewSize(imageSize: CGSize) -> CGSize {
-        let screenWidth = UIScreen.main.bounds.size.width
-        var resultSize = CGSize.zero
-        if imageSize.width > screenWidth {
-            let ratio = screenWidth / imageSize.width
-            resultSize = CGSize(width: screenWidth, height: imageSize.height * ratio)
-        } else {
-            let ratio = imageSize.width / screenWidth
-            resultSize = CGSize(width: screenWidth, height: imageSize.height * ratio)
-        }
-        return resultSize
+    private func getDefaultImageViewSize(imageSize: CGSize, targetSize: CGSize) -> CGSize {
+        return calculateAspectFitSize(maxSize: targetSize, imageSize: imageSize)
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {}
@@ -197,5 +275,16 @@ class CustomImageEditorViewController: UIViewController {
 
         print("test11 image: \(image)")
         self.croppedImage = image
+    }
+
+    // MARK: - Utility methods
+    private func calculateAspectFitSize(maxSize: CGSize, imageSize: CGSize) -> CGSize {
+        let widthRatio = maxSize.width / imageSize.width
+        let heightRatio = maxSize.height / imageSize.height
+        let ratio = min(widthRatio, heightRatio)
+
+        let newWidth = imageSize.width * ratio
+        let newHeight = imageSize.height * ratio
+        return CGSize(width: newWidth, height: newHeight)
     }
 }
