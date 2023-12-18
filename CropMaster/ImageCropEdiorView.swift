@@ -312,7 +312,7 @@ class ImageCropEdiorView: UIView {
 
     // MARK: - Utility methods
     private func checkIsInMoveMode(frame: CGRect, currentPoint: CGPoint) -> Bool {
-        let centerAreaWidth = frame.width * 0.1
+        let centerAreaWidth = max(frame.width * 0.1, CGFloat(50))
         let centerPoint = CGPoint(x: frame.origin.x + (frame.width / 2), y: frame.origin.y + (frame.height / 2))
         if (abs(currentPoint.x - centerPoint.x) < centerAreaWidth) && (abs(currentPoint.y - centerPoint.y) < centerAreaWidth) {
             return true
@@ -329,32 +329,24 @@ class ImageCropEdiorView: UIView {
         let newHeight = imageSize.height * ratio
         return CGSize(width: newWidth, height: newHeight)
     }
-    
+
     private func getFixedStartPoint(frame: CGRect, currentPoint: CGPoint) -> CGPoint {
         let topLeftPoint = frame.origin
-        let topRightPoint = CGPoint(x: (frame.origin.x + frame.width), y: frame.origin.y)
-        let bottomLeftPoint = CGPoint(x: frame.origin.x, y: (frame.origin.y + frame.height))
-        let bottomRightPoint = CGPoint(x: (frame.origin.x + frame.width), y: (frame.origin.y + frame.height))
+        let topRightPoint = CGPoint(x: frame.maxX, y: frame.minY)
+        let bottomLeftPoint = CGPoint(x: frame.minX, y: frame.maxY)
+        let bottomRightPoint = CGPoint(x: frame.maxX, y: frame.maxY)
 
-        let topLeftPointWeight = abs(topLeftPoint.x - currentPoint.x) + abs(topLeftPoint.y - currentPoint.y)
-        let topRightPointWeight = abs(topRightPoint.x - currentPoint.x) + abs(topRightPoint.y - currentPoint.y)
-        let bottomLeftPointWeight = abs(bottomLeftPoint.x - currentPoint.x) + abs(bottomLeftPoint.y - currentPoint.y)
-        let bottomRightPointWeight = abs(bottomRightPoint.x - currentPoint.x) + abs(bottomRightPoint.y - currentPoint.y)
-
-        let min1 = min(topLeftPointWeight, topRightPointWeight)
-        let min2 = min(bottomLeftPointWeight, bottomRightPointWeight)
-        if min1 < min2 {
-            if topLeftPointWeight < topRightPointWeight {
-                return bottomRightPoint // topLeftPoint
-            } else {
-                return bottomLeftPoint // topRightPoint
-            }
-        } else {
-            if bottomLeftPointWeight < bottomRightPointWeight {
-                return topRightPoint // bottomLeftPoint
-            } else {
-                return topLeftPoint // bottomRightPoint
-            }
+        let points = [topLeftPoint, topRightPoint, bottomLeftPoint, bottomRightPoint]
+        let diagonallyOppositePointArr = [bottomRightPoint, bottomLeftPoint, topRightPoint, topLeftPoint]
+        
+        let minDiffPoint = points.min(by: {
+            abs($0.x - currentPoint.x) + abs($0.y - currentPoint.y) <
+            abs($1.x - currentPoint.x) + abs($1.y - currentPoint.y)
+        }) ?? frame.origin
+        
+        if let index = points.firstIndex(of: minDiffPoint) {
+            return diagonallyOppositePointArr[index]
         }
+        return frame.origin
     }
 }
