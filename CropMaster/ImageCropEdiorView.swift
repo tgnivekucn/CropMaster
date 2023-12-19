@@ -26,10 +26,9 @@ class ImageCropEdiorView: UIView {
             let newY = (currentPointInImageView.y)  - (newSize.height / 2)
             selectAreaFrame = CGRect(origin: CGPoint(x: newX, y: newY),
                                      size: newSize)
-            rectShapeLayer.path = UIBezierPath(rect: selectAreaFrame).cgPath
+            setupRoundRectForLayer(rect: selectAreaFrame, layer: rectShapeLayer)
         }
     }
-    private var croppedImage: UIImage?
     private let lineWidth = CGFloat(5)
     private var imageToEdit: UIImage?
     private var fixedStartPoint: CGPoint?
@@ -178,14 +177,14 @@ class ImageCropEdiorView: UIView {
                                                        selectAreaSize: selectAreaFrame.size,
                                                        imageSize: imageView.frame.size)
             let frame = CGRect(origin: originPoint, size: selectAreaFrame.size) //rect(from: startPoint, to: currentPoint)
-            rectShapeLayer.path = UIBezierPath(rect: frame).cgPath
+            setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
             fixedStartPoint = getFixedStartPoint(frame: selectAreaFrame, currentPoint: currentPoint)
             selectAreaFrame = frame
         } else {
             if let fixedStartPoint = fixedStartPoint {
                 let frame = rect(from: fixedStartPoint, to: currentPoint)
                 selectAreaFrame = frame
-                rectShapeLayer.path = UIBezierPath(rect: frame).cgPath
+                setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
             }
         }
     }
@@ -229,10 +228,14 @@ class ImageCropEdiorView: UIView {
                            safeAreaInsets: areaInsets)
             
             imageView?.layer.addSublayer(rectShapeLayer)
+            
+            let targetSize = getDefaultImageViewSize(imageSize: imageToEdit.size, targetSize: self.frame.size)
+            self.frame.size = targetSize
+
         }
         
         maskViewOfImage.frame = imageView?.frame ?? .zero
-        maskViewOfImage.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        maskViewOfImage.backgroundColor = UIColor.black.withAlphaComponent(0.8)
         self.addSubview(maskViewOfImage)
         maskViewOfImage.sethighlightedArea(frame: selectAreaFrame)
     }
@@ -241,8 +244,8 @@ class ImageCropEdiorView: UIView {
         let targetSize = getDefaultImageViewSize(imageSize: imageSize, targetSize: self.frame.size)
         let originPoint = CGPoint(x: (targetSize.width / 2) - (originalSelectAreaSize.width / 2),
                                   y: (targetSize.height / 2) - (originalSelectAreaSize.height / 2))
-        rectShapeLayer.path = UIBezierPath(rect: CGRect(origin: originPoint, size: selectAreaFrame.size)).cgPath
-        selectAreaFrame = CGRect(origin: originPoint, size: selectAreaFrame.size)
+        selectAreaFrame = CGRect(origin: .zero, size: targetSize)
+        setupRoundRectForLayer(rect: selectAreaFrame, layer: rectShapeLayer)
     }
     
     private func setupImageView(imageSize: CGSize, safeAreaWidth: CGFloat, safeAreaHeight: CGFloat, safeAreaInsets: UIEdgeInsets) {
@@ -293,7 +296,6 @@ class ImageCropEdiorView: UIView {
         rectShapeLayer.removeFromSuperlayer()
         let image = imageView.snapshot(rect: frame, afterScreenUpdates: true)
         imageView.layer.addSublayer(rectShapeLayer)
-        self.croppedImage = image
         self.passResultImageClosure?(image)
     }
 
@@ -338,5 +340,57 @@ class ImageCropEdiorView: UIView {
             return diagonallyOppositePointArr[index]
         }
         return frame.origin
+    }
+    
+    private func setupRoundRectForLayer(rect: CGRect, layer: CAShapeLayer) {
+        let cornerRadius = CGFloat(20)
+
+        // Create a path
+        let path = UIBezierPath()
+
+        // Add top-left rounded corner
+        path.move(to: CGPoint(x: rect.origin.x + (1.5 * cornerRadius), y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.origin.x + cornerRadius, y: rect.origin.y))
+        path.addArc(withCenter: CGPoint(x: rect.origin.x + cornerRadius, y: rect.origin.y + cornerRadius),
+                    radius: cornerRadius,
+                    startAngle: CGFloat.pi * 1.5,
+                    endAngle: CGFloat.pi,
+                    clockwise: false)
+        path.addLine(to: CGPoint(x: rect.origin.x, y: rect.origin.y + 1.5 * cornerRadius))
+
+        
+        // Add top-right rounded corner
+        path.move(to: CGPoint(x: rect.maxX - (1.5 * cornerRadius), y: rect.origin.y))
+        path.addLine(to: CGPoint(x: rect.maxX - cornerRadius, y: rect.origin.y))
+        path.addArc(withCenter: CGPoint(x: rect.maxX - cornerRadius, y: rect.origin.y + cornerRadius),
+                    radius: cornerRadius,
+                    startAngle: CGFloat.pi * 1.5,
+                    endAngle: CGFloat.pi * 2,
+                    clockwise: true)
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.origin.y + 1.5 * cornerRadius))
+
+        
+        // Add lower-right rounded corner
+        path.move(to: CGPoint(x: rect.maxX, y: rect.maxY - (1.5 * cornerRadius)))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerRadius))
+        path.addArc(withCenter: CGPoint(x: rect.maxX - cornerRadius, y: rect.maxY - cornerRadius),
+                    radius: cornerRadius,
+                    startAngle: CGFloat.pi * 2,
+                    endAngle: -CGFloat.pi * 1.5,
+                    clockwise: true)
+        path.addLine(to: CGPoint(x: rect.maxX - (1.5 * cornerRadius), y: rect.maxY))
+
+        // Add lower-left rounded corner
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY - (1.5 * cornerRadius)))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - cornerRadius))
+        path.addArc(withCenter: CGPoint(x: rect.origin.x + cornerRadius, y: rect.maxY - cornerRadius),
+                    radius: cornerRadius,
+                    startAngle: -CGFloat.pi,
+                    endAngle: -CGFloat.pi * 1.5,
+                    clockwise: false)
+        path.addLine(to: CGPoint(x: rect.minX + (1.5 * cornerRadius), y: rect.maxY))
+        
+        print("test11 finalPath: \(path)")
+        rectShapeLayer.path = path.cgPath
     }
 }

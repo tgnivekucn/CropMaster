@@ -29,7 +29,8 @@ class HighlightedAreaView: UIView {
 
     private func setupHighlightedArea() {
         let fullRectPath = UIBezierPath(rect: self.bounds)
-        let highlightedPath = UIBezierPath(rect: highlightedAreaFrame)
+        
+        let highlightedPath = UIBezierPath(roundedRect: highlightedAreaFrame.insetBy(dx: -3, dy: -3), cornerRadius: 20)
         fullRectPath.append(highlightedPath)
         fullRectPath.usesEvenOddFillRule = true
 
