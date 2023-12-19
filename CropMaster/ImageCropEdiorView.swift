@@ -195,14 +195,10 @@ class ImageCropEdiorView: UIView {
         
         let currentPoint = touch.location(in: imageView)
         currentPointInImageView = currentPoint
-        
-        let originPoint = getSelectAreaOriginPoint(touchPoint: currentPoint,
-                                                   selectAreaSize: selectAreaFrame.size,
-                                                   imageSize: imageView.frame.size)
-        let frame = CGRect(origin: originPoint, size: selectAreaFrame.size)
+
         inMoveMode = checkIsInMoveMode(frame: selectAreaFrame, currentPoint: currentPoint)
-        
-        setTargetImage(frame: frame)
+
+        setTargetImage(frame: selectAreaFrame)
     }
 
     // MARK: - Private methods
@@ -242,8 +238,6 @@ class ImageCropEdiorView: UIView {
     
     private func setupRectShapeLayer(imageSize: CGSize) {
         let targetSize = getDefaultImageViewSize(imageSize: imageSize, targetSize: self.frame.size)
-        let originPoint = CGPoint(x: (targetSize.width / 2) - (originalSelectAreaSize.width / 2),
-                                  y: (targetSize.height / 2) - (originalSelectAreaSize.height / 2))
         selectAreaFrame = CGRect(origin: .zero, size: targetSize)
         setupRoundRectForLayer(rect: selectAreaFrame, layer: rectShapeLayer)
     }
