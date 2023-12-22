@@ -9,8 +9,8 @@ import UIKit
 class ImageCropEdiorView: UIView {
     private var imageView: UIImageView?
     private var maskViewOfImage: HighlightedAreaView = HighlightedAreaView()
-    private let originalSelectAreaSize = CGSize(width: 200, height: 100)
-    private var selectAreaFrame = CGRect(origin: .zero, size: CGSize(width: 200, height: 100)) {
+    private static let originalSelectAreaSize = CGSize(width: 80, height: 80)
+    private var selectAreaFrame = CGRect(origin: .zero, size: ImageCropEdiorView.originalSelectAreaSize) {
         didSet {
             maskViewOfImage.sethighlightedArea(frame: selectAreaFrame)
         }
@@ -20,8 +20,8 @@ class ImageCropEdiorView: UIView {
     private let maxScale: CGFloat = 2
     private var scale: CGFloat = 1 {
         didSet {
-            let newSize = CGSize(width: originalSelectAreaSize.width * scale,
-                                 height: originalSelectAreaSize.height * scale)
+            let newSize = CGSize(width: ImageCropEdiorView.originalSelectAreaSize.width * scale,
+                                 height: ImageCropEdiorView.originalSelectAreaSize.height * scale)
             let newX = (currentPointInImageView.x)  - (newSize.width / 2)
             let newY = (currentPointInImageView.y)  - (newSize.height / 2)
             selectAreaFrame = CGRect(origin: CGPoint(x: newX, y: newY),
@@ -176,9 +176,8 @@ class ImageCropEdiorView: UIView {
             let originPoint = getSelectAreaOriginPoint(touchPoint: currentPoint,
                                                        selectAreaSize: selectAreaFrame.size,
                                                        imageSize: imageView.frame.size)
-            let resultAreaSize = getSelectAreaSize(touchPoint: originPoint,
-                                                   selectAreaSize: selectAreaFrame.size,
-                                                   imageSize: imageView.frame.size)
+            
+            let resultAreaSize = selectAreaFrame.size
             let frame = CGRect(origin: originPoint, size: resultAreaSize) //rect(from: startPoint, to: currentPoint)
             print("test99 frame changed after touchesMoved: \(frame)")
             setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
@@ -214,7 +213,7 @@ class ImageCropEdiorView: UIView {
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(pinch(gesture:)))
         self.addGestureRecognizer(pinchGesture)
     }
-    
+
     private func updateSubViewLayout(viewWidth: CGFloat, viewHeight: CGFloat, areaInsets: UIEdgeInsets, imageToEdit: UIImage?) {
         // Remove the rectShapeLayer to avoid adding the rectShapeLayer repeatedly
         rectShapeLayer.removeFromSuperlayer()
@@ -237,19 +236,19 @@ class ImageCropEdiorView: UIView {
             self.frame.size = targetSize
 
         }
-        
+
         maskViewOfImage.frame = imageView?.frame ?? .zero
         maskViewOfImage.backgroundColor = UIColor.black.withAlphaComponent(0.8)
         self.addSubview(maskViewOfImage)
         maskViewOfImage.sethighlightedArea(frame: selectAreaFrame)
     }
-    
+
     private func setupRectShapeLayer(imageSize: CGSize) {
         let targetSize = getDefaultImageViewSize(imageSize: imageSize, targetSize: self.frame.size)
         selectAreaFrame = CGRect(origin: .zero, size: targetSize)
         setupRoundRectForLayer(rect: selectAreaFrame, layer: rectShapeLayer)
     }
-    
+
     private func setupImageView(imageSize: CGSize, safeAreaWidth: CGFloat, safeAreaHeight: CGFloat, safeAreaInsets: UIEdgeInsets) {
         // 1. Remove the image view to avoid adding the image view repeatedly
         imageView?.removeFromSuperview()
@@ -291,23 +290,6 @@ class ImageCropEdiorView: UIView {
             tmpY = (imageSize.height - selectAreaSize.height)
         }
         return CGPoint(x: tmpX, y: tmpY)
-    }
-    
-    private func getSelectAreaSize(touchPoint: CGPoint, selectAreaSize: CGSize, imageSize: CGSize) -> CGSize {
-        let tmpX = touchPoint.x
-        let tmpY = touchPoint.y
-        
-        var resultMaxWidth = tmpX + selectAreaSize.width
-        if resultMaxWidth < imageSize.width {
-            resultMaxWidth = imageSize.width - tmpX
-        }
-        
-        var resultMaxHeight = tmpY + selectAreaSize.height
-        if resultMaxHeight < imageSize.height {
-            resultMaxHeight = imageSize.height - tmpY
-        }
-        
-        return CGSize(width: resultMaxWidth, height: resultMaxHeight)
     }
 
     private func constrainMovePoint(touchPoint: CGPoint, imageSizeWidth: CGFloat, imageSizeHeight: CGFloat) -> CGPoint {
