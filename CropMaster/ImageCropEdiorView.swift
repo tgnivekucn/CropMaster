@@ -176,13 +176,21 @@ class ImageCropEdiorView: UIView {
             let originPoint = getSelectAreaOriginPoint(touchPoint: currentPoint,
                                                        selectAreaSize: selectAreaFrame.size,
                                                        imageSize: imageView.frame.size)
-            let frame = CGRect(origin: originPoint, size: selectAreaFrame.size) //rect(from: startPoint, to: currentPoint)
+            let resultAreaSize = getSelectAreaSize(touchPoint: originPoint,
+                                                   selectAreaSize: selectAreaFrame.size,
+                                                   imageSize: imageView.frame.size)
+            let frame = CGRect(origin: originPoint, size: resultAreaSize) //rect(from: startPoint, to: currentPoint)
+            print("test99 frame changed after touchesMoved: \(frame)")
             setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
             fixedStartPoint = getFixedStartPoint(frame: selectAreaFrame, currentPoint: currentPoint)
             selectAreaFrame = frame
         } else {
             if let fixedStartPoint = fixedStartPoint {
-                let frame = rect(from: fixedStartPoint, to: currentPoint)
+                let newPoint = constrainMovePoint(touchPoint: currentPoint,
+                                   imageSizeWidth: self.frame.width,
+                                   imageSizeHeight: self.frame.height)
+                let frame = rect(from: fixedStartPoint, to: newPoint)
+
                 selectAreaFrame = frame
                 setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
             }
@@ -281,6 +289,43 @@ class ImageCropEdiorView: UIView {
         }
         if (tmpY + selectAreaSize.height + lineWidth) > imageSize.height {
             tmpY = (imageSize.height - selectAreaSize.height)
+        }
+        return CGPoint(x: tmpX, y: tmpY)
+    }
+    
+    private func getSelectAreaSize(touchPoint: CGPoint, selectAreaSize: CGSize, imageSize: CGSize) -> CGSize {
+        let tmpX = touchPoint.x
+        let tmpY = touchPoint.y
+        
+        var resultMaxWidth = tmpX + selectAreaSize.width
+        if resultMaxWidth < imageSize.width {
+            resultMaxWidth = imageSize.width - tmpX
+        }
+        
+        var resultMaxHeight = tmpY + selectAreaSize.height
+        if resultMaxHeight < imageSize.height {
+            resultMaxHeight = imageSize.height - tmpY
+        }
+        
+        return CGSize(width: resultMaxWidth, height: resultMaxHeight)
+    }
+
+    private func constrainMovePoint(touchPoint: CGPoint, imageSizeWidth: CGFloat, imageSizeHeight: CGFloat) -> CGPoint {
+        var tmpX = touchPoint.x
+        var tmpY = touchPoint.y
+
+        if (tmpX - lineWidth) < 0 {
+            tmpX = (lineWidth / 2)
+        }
+        if (tmpX + lineWidth) > imageSizeWidth {
+            tmpX = (imageSizeWidth - (lineWidth / 2))
+        }
+        
+        if (tmpY - lineWidth) < 0 {
+            tmpY = 0
+        }
+        if (tmpY + lineWidth) > imageSizeHeight {
+            tmpY = imageSizeHeight
         }
         return CGPoint(x: tmpX, y: tmpY)
     }
@@ -383,8 +428,6 @@ class ImageCropEdiorView: UIView {
                     endAngle: -CGFloat.pi * 1.5,
                     clockwise: false)
         path.addLine(to: CGPoint(x: rect.minX + (1.5 * cornerRadius), y: rect.maxY))
-        
-        print("test11 finalPath: \(path)")
         rectShapeLayer.path = path.cgPath
     }
 }
