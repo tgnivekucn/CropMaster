@@ -189,9 +189,13 @@ class ImageCropEdiorView: UIView {
                                    imageSizeWidth: self.frame.width,
                                    imageSizeHeight: self.frame.height)
                 let frame = rect(from: fixedStartPoint, to: newPoint)
-
-                selectAreaFrame = frame
-                setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
+                if (frame.size.width * frame.size.height) >= 2500
+                    && frame.size.width > 20
+                    && frame.size.height > 20  {
+                    print("test99 : \(frame.size)")
+                    selectAreaFrame = frame
+                    setupRoundRectForLayer(rect: frame, layer: rectShapeLayer)
+                }
             }
         }
     }
@@ -325,7 +329,7 @@ class ImageCropEdiorView: UIView {
     }
 
     private func checkIsInMoveMode(frame: CGRect, currentPoint: CGPoint) -> Bool {
-        let centerAreaWidth = max(frame.width * 0.1, CGFloat(50))
+        let centerAreaWidth = max(frame.width * 0.1, CGFloat(30))
         let centerPoint = CGPoint(x: frame.origin.x + (frame.width / 2), y: frame.origin.y + (frame.height / 2))
         if (abs(currentPoint.x - centerPoint.x) < centerAreaWidth) && (abs(currentPoint.y - centerPoint.y) < centerAreaWidth) {
             return true
